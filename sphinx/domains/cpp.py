@@ -7009,7 +7009,7 @@ class CPPObject(ObjectDescription[ASTDeclaration]):
         ids = list(reversed(ids))
         newestId = ids[0]
         assert newestId  # shouldn't be None
-        if not re.compile(r'^[a-zA-Z0-9_]*$').match(newestId):
+        if not re.compile(r'^[a-zA-Z0-9_\u00A8\u00AA\u00AD\u00AF\u00B2-\u00B5\u00B7-\u00BA\u00BC-\u00BE\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\u0100-\u167F\u1681-\u180D\u180F-\u1FFF\u200B-\u200D\u202A-\u202E\u203F-\u2040\u2054\u2060-\u206F\u2070-\u218F\u2460-\u24FF\u2776-\u2793\u2C00-\u2DFF\u2E80-\u2FFF\u3004-\u3007\u3021-\u302F\u3031-\uD7FF\uF900-\uFD3D\uFD40-\uFDCF\uFDF0-\uFE44\uFE47-\uFFFD\U00010000-\U0001FFFD\U00020000-\U0002FFFD\U00030000-\U0003FFFD\U00040000-\U0004FFFD\U00050000-\U0005FFFD\U00060000-\U0006FFFD\U00070000-\U0007FFFD\U00080000-\U0008FFFD\U00090000-\U0009FFFD\U000A0000-\U000AFFFD\U000B0000-\U000BFFFD\U000C0000-\U000CFFFD\U000D0000-\U000DFFFD\U000E0000-\U000EFFFD]*$').match(newestId):
             logger.warning('Index id generation for C++ object "%s" failed, please '
                            'report as bug (id=%s).', ast, newestId,
                            location=self.get_location())
