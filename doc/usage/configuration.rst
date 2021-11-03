@@ -22,9 +22,9 @@ and output behavior.
   .. _`docutils.conf`: https://docutils.sourceforge.io/docs/user/config.html
 
 The configuration file is executed as Python code at build time (using
-:func:`execfile`, and with the current directory set to its containing
-directory), and therefore can execute arbitrarily complex code.  Sphinx then
-reads simple names from the file's namespace as its configuration.
+:func:`importlib.import_module`, and with the current directory set to its
+containing directory), and therefore can execute arbitrarily complex code.
+Sphinx then reads simple names from the file's namespace as its configuration.
 
 Important points to note:
 
@@ -2331,6 +2331,8 @@ These options influence manual page output.
 
    *description*
      Description of the manual page.  This is used in the NAME section.
+     Can be an empty string if you do not want to automatically generate
+     the NAME section.
 
    *authors*
      A list of strings with authors, or a single string.  Can be an empty
@@ -2554,7 +2556,7 @@ Options for the linkcheck builder
 
    A dictionary that maps baseurls to HTTP request headers.
 
-   The key is a URL base string like ``"https://sphinx-doc.org/"``.  To specify
+   The key is a URL base string like ``"https://www.sphinx-doc.org/"``.  To specify
    headers for other hosts, ``"*"`` can be used.  It matches all hosts only when
    the URL does not match other settings.
 
@@ -2565,7 +2567,7 @@ Options for the linkcheck builder
    .. code-block:: python
 
       linkcheck_request_headers = {
-          "https://sphinx-doc.org/": {
+          "https://www.sphinx-doc.org/": {
               "Accept": "text/html",
               "Accept-Encoding": "utf-8",
           },
@@ -2635,10 +2637,8 @@ Options for the linkcheck builder
      A regular expression that matches a URI.
    *auth_info*
      Authentication information to use for that URI. The value can be anything
-     that is understood by the ``requests`` library (see `requests
-     Authentication <requests-auth>`_ for details).
-
-     .. _requests-auth: https://requests.readthedocs.io/en/master/user/authentication/
+     that is understood by the ``requests`` library (see :ref:`requests
+     Authentication <requests:authentication>` for details).
 
    The ``linkcheck`` builder will use the first matching ``auth_info`` value
    it can find in the :confval:`linkcheck_auth` list, so values earlier in the

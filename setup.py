@@ -176,7 +176,7 @@ else:
 setup(
     name='Sphinx',
     version=sphinx.__version__,
-    url='https://sphinx-doc.org/',
+    url='https://www.sphinx-doc.org/',
     download_url='https://pypi.org/project/Sphinx/',
     license='BSD',
     author='Georg Brandl',
@@ -207,6 +207,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Framework :: Setuptools Plugin',

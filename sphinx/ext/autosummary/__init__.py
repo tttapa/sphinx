@@ -58,6 +58,7 @@ import posixpath
 import re
 import sys
 import warnings
+from inspect import Parameter
 from os import path
 from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple, Type, cast
@@ -87,6 +88,7 @@ from sphinx.registry import SphinxComponentRegistry
 from sphinx.util import logging, rst
 from sphinx.util.docutils import (NullReporter, SphinxDirective, SphinxRole, new_document,
                                   switch_source_input)
+from sphinx.util.inspect import signature_from_str
 from sphinx.util.matching import Matcher
 from sphinx.util.typing import OptionSpec
 from sphinx.writers.html import HTMLTranslator
@@ -222,7 +224,7 @@ def get_documenter(app: Sphinx, obj: Any, parent: Any) -> Type[Documenter]:
     else:
         parent_doc = parent_doc_cls(FakeDirective(), "")
 
-    # Get the corrent documenter class for *obj*
+    # Get the correct documenter class for *obj*
     classes = [cls for cls in app.registry.documenters.values()
                if cls.can_document_member(obj, '', False, parent_doc)]
     if classes:
@@ -442,9 +444,9 @@ class Autosummary(SphinxDirective):
         for name, sig, summary, real_name in items:
             qualifier = 'obj'
             if 'nosignatures' not in self.options:
-                col1 = ':%s:`%s <%s>`\\ %s' % (qualifier, name, real_name, rst.escape(sig))
+                col1 = ':py:%s:`%s <%s>`\\ %s' % (qualifier, name, real_name, rst.escape(sig))
             else:
-                col1 = ':%s:`%s <%s>`' % (qualifier, name, real_name)
+                col1 = ':py:%s:`%s <%s>`' % (qualifier, name, real_name)
             col2 = summary
             append_row(col1, col2)
 
@@ -456,10 +458,32 @@ def strip_arg_typehint(s: str) -> str:
     return s.split(':')[0].strip()
 
 
+def _cleanup_signature(s: str) -> str:
+    """Clean up signature using inspect.signautre() for mangle_signature()"""
+    try:
+        sig = signature_from_str(s)
+        parameters = list(sig.parameters.values())
+        for i, param in enumerate(parameters):
+            if param.annotation is not Parameter.empty:
+                # Remove typehints
+                param = param.replace(annotation=Parameter.empty)
+            if param.default is not Parameter.empty:
+                # Replace default value by "None"
+                param = param.replace(default=None)
+            parameters[i] = param
+        sig = sig.replace(parameters=parameters, return_annotation=Parameter.empty)
+        return str(sig)
+    except Exception:
+        # Return the original signature string if failed to clean (ex. parsing error)
+        return s
+
+
 def mangle_signature(sig: str, max_chars: int = 30) -> str:
     """Reformat a function signature to a more compact form."""
+    s = _cleanup_signature(sig)
+
     # Strip return type annotation
-    s = re.sub(r"\)\s*->\s.*$", ")", sig)
+    s = re.sub(r"\)\s*->\s.*$", ")", s)
 
     # Remove parenthesis
     s = re.sub(r"^\((.*)\)$", r"\1", s).strip()
@@ -540,7 +564,10 @@ def extract_summary(doc: List[str], document: Any) -> str:
 
     # parse the docstring
     node = parse(doc, document.settings)
-    if not isinstance(node[0], nodes.paragraph):
+    if isinstance(node[0], nodes.section):
+        # document starts with a section heading, so use that.
+        summary = node[0].astext().strip()
+    elif not isinstance(node[0], nodes.paragraph):
         # document starts with non-paragraph: pick up the first line
         summary = doc[0].strip()
     else:
@@ -556,7 +583,7 @@ def extract_summary(doc: List[str], document: Any) -> str:
                 node = parse(doc, document.settings)
                 if summary.endswith(WELL_KNOWN_ABBREVIATIONS):
                     pass
-                elif not node.traverse(nodes.system_message):
+                elif not list(node.traverse(nodes.system_message)):
                     # considered as that splitting by period does not break inline markups
                     break
 

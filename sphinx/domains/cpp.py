@@ -162,7 +162,7 @@ T = TypeVar('T')
         trailing-type-specifier ->
             rest-of-trailing
             ("class" | "struct" | "union" | "typename") rest-of-trailing
-            build-in -> "char" | "bool" | etc.
+            built-in -> "char" | "bool" | etc.
             decltype-specifier
         rest-of-trailing -> (with some simplification)
             "::"[opt] list-of-elements-separated-by-::
@@ -335,7 +335,7 @@ _keywords = [
 ]
 
 
-_simple_type_sepcifiers_re = re.compile(r"""(?x)
+_simple_type_specifiers_re = re.compile(r"""(?x)
     \b(
     auto|void|bool
     # Integer
@@ -1709,7 +1709,7 @@ class ASTOperatorBuildIn(ASTOperator):
         else:
             ids = _id_operator_v2
         if self.op not in ids:
-            raise Exception('Internal error: Build-in operator "%s" can not '
+            raise Exception('Internal error: Built-in operator "%s" can not '
                             'be mapped to an id.' % self.op)
         return ids[self.op]
 
@@ -2479,7 +2479,7 @@ class ASTDeclaratorNameParamQual(ASTDeclarator):
     def get_type_id(self, version: int, returnTypeId: str) -> str:
         assert version >= 2
         res = []
-        # TOOD: can we actually have both array ops and paramQual?
+        # TODO: can we actually have both array ops and paramQual?
         res.append(self.get_ptr_suffix_id(version))
         if self.paramQual:
             res.append(self.get_modifiers_id(version))
@@ -5217,7 +5217,7 @@ class DefinitionParser(BaseParser):
                                 ) -> Tuple[List[Union[ASTExpression,
                                                       ASTBracedInitList]],
                                            bool]:
-        # Parse open and close with the actual initializer-list inbetween
+        # Parse open and close with the actual initializer-list in between
         # -> initializer-clause '...'[opt]
         #  | initializer-list ',' initializer-clause '...'[opt]
         self.skip_ws()
@@ -5859,7 +5859,7 @@ class DefinitionParser(BaseParser):
         # fundamental types, https://en.cppreference.com/w/cpp/language/type
         # and extensions
         self.skip_ws()
-        if self.match(_simple_type_sepcifiers_re):
+        if self.match(_simple_type_specifiers_re):
             return ASTTrailingTypeSpecFundamental(self.matched_text)
 
         # decltype
@@ -6358,7 +6358,7 @@ class DefinitionParser(BaseParser):
         if outer in ('type', 'function'):
             # We allow type objects to just be a name.
             # Some functions don't have normal return types: constructors,
-            # destrutors, cast operators
+            # destructors, cast operators
             prevErrors = []
             startPos = self.pos
             # first try without the type
@@ -6562,7 +6562,7 @@ class DefinitionParser(BaseParser):
                 self.fail("Expected 'typename' or 'class' after "
                           "template template parameter list.")
             else:
-                self.fail("Expected 'typename' or 'class' in tbe "
+                self.fail("Expected 'typename' or 'class' in the "
                           "beginning of template type parameter.")
             self.skip_ws()
             parameterPack = self.skip_string('...')
@@ -6934,18 +6934,10 @@ def _make_phony_error_name() -> ASTNestedName:
 class CPPObject(ObjectDescription[ASTDeclaration]):
     """Description of a C++ language object."""
 
-    doc_field_types = [
-        GroupedField('parameter', label=_('Parameters'),
-                     names=('param', 'parameter', 'arg', 'argument'),
-                     can_collapse=True),
+    doc_field_types: List[Field] = [
         GroupedField('template parameter', label=_('Template Parameters'),
                      names=('tparam', 'template parameter'),
                      can_collapse=True),
-        GroupedField('exceptions', label=_('Throws'), rolename='expr',
-                     names=('throws', 'throw', 'exception'),
-                     can_collapse=True),
-        Field('returnvalue', label=_('Returns'), has_arg=False,
-              names=('returns', 'return')),
     ]
 
     option_spec: OptionSpec = {
@@ -7181,6 +7173,20 @@ class CPPMemberObject(CPPObject):
 class CPPFunctionObject(CPPObject):
     object_type = 'function'
 
+    doc_field_types = CPPObject.doc_field_types + [
+        GroupedField('parameter', label=_('Parameters'),
+                     names=('param', 'parameter', 'arg', 'argument'),
+                     can_collapse=True),
+        GroupedField('exceptions', label=_('Throws'), rolename='expr',
+                     names=('throws', 'throw', 'exception'),
+                     can_collapse=True),
+        GroupedField('retval', label=_('Return values'),
+                     names=('retvals', 'retval'),
+                     can_collapse=True),
+        Field('returnvalue', label=_('Returns'), has_arg=False,
+              names=('returns', 'return')),
+    ]
+
 
 class CPPClassObject(CPPObject):
     object_type = 'class'
@@ -7282,7 +7288,7 @@ class CPPNamespacePopObject(SphinxDirective):
     def run(self) -> List[Node]:
         stack = self.env.temp_data.get('cpp:namespace_stack', None)
         if not stack or len(stack) == 0:
-            logger.warning("C++ namespace pop on empty stack. Defaulting to gobal scope.",
+            logger.warning("C++ namespace pop on empty stack. Defaulting to global scope.",
                            location=self.get_location())
             stack = []
         else:
