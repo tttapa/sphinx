@@ -329,6 +329,8 @@ General configuration
    * ``ref.python``
    * ``misc.highlighting_failure``
    * ``toc.circular``
+   * ``toc.excluded``
+   * ``toc.not_readable``
    * ``toc.secnum``
    * ``epub.unknown_project_files``
    * ``epub.duplicated_toc_entry``
@@ -359,6 +361,10 @@ General configuration
    .. versionchanged:: 3.3.0
 
       Added ``epub.duplicated_toc_entry``
+
+   .. versionchanged:: 4.3
+
+      Added ``toc.excluded`` and ``toc.not_readable``
 
 .. confval:: needs_sphinx
 
@@ -802,6 +808,13 @@ documentation on :ref:`intl` for details.
    .. versionchanged:: 1.5
       Use ``locales`` directory as a default value
 
+.. confval:: gettext_allow_fuzzy_translations
+
+   If true, "fuzzy" messages in the message catalogs are used for translation.
+   The default is ``False``.
+
+   .. versionadded:: 4.3
+
 .. confval:: gettext_compact
 
    .. versionadded:: 1.1
@@ -992,7 +1005,7 @@ that use Sphinx's HTMLWriter class.
    to indicate the location of document using `The Canonical Link Relation`_.
    Default: ``''``.
 
-   .. _The Canonical Link Relation: https://tools.ietf.org/html/rfc6596
+   .. _The Canonical Link Relation: https://datatracker.ietf.org/doc/html/rfc6596
 
    .. versionadded:: 1.8
 
@@ -2666,7 +2679,7 @@ Options for the linkcheck builder
    doubling the wait time between attempts until it succeeds or exceeds the
    ``linkcheck_rate_limit_timeout``. By default, the timeout is 5 minutes.
 
-   .. _Retry-After: https://tools.ietf.org/html/rfc7231#section-7.1.3
+   .. _Retry-After: https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.3
 
    .. versionadded:: 3.4
 

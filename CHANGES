@@ -1,5 +1,89 @@
-Release 4.3.0 (in development)
+Release 4.4.0 (in development)
 ==============================
+
+Dependencies
+------------
+
+Incompatible changes
+--------------------
+
+Deprecated
+----------
+
+Features added
+--------------
+
+* #9831: Autosummary now documents only the members specified in a module's
+  ``__all__`` attribute if :confval:`autosummary_ignore_module_all` is set to
+  ``False``. The default behaviour is unchanged. Autogen also now supports
+  this behavior with the ``--respect-module-all`` switch.
+* #9800: extlinks: Emit warning if a hardcoded link is replaceable
+  by an extlink, suggesting a replacement.
+* #9815: html theme: Wrap sidebar components in div to allow customizing their
+  layout via CSS
+* #9899: py domain: Allows to specify cross-reference specifier (``.`` and
+  ``~``) as ``:type:`` option
+
+Bugs fixed
+----------
+
+* #9866: autodoc: doccomment for the imported class was ignored
+* #9883: autodoc: doccomment for the alias to mocked object was ignored
+* #9908: autodoc: debug message is shown on building document using NewTypes
+  with Python 3.10
+* #9878: mathjax: MathJax configuration is placed after loading MathJax itself
+* #9857: Generated RFC links use outdated base url
+
+Testing
+--------
+
+Release 4.3.2 (in development)
+==============================
+
+Dependencies
+------------
+
+Incompatible changes
+--------------------
+
+Deprecated
+----------
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+Testing
+--------
+
+Release 4.3.1 (released Nov 28, 2021)
+=====================================
+
+Features added
+--------------
+
+* #9864: mathjax: Support chnaging the loading method of MathJax to "defer" via
+  :confval:`mathjax_options`
+
+Bugs fixed
+----------
+
+* #9838: autodoc: AttributeError is raised on building document for functions
+  decorated by functools.lru_cache
+* #9879: autodoc: AttributeError is raised on building document for an object
+  having invalid __doc__ atribute
+* #9844: autodoc: Failed to process a function wrapped with functools.partial if
+  :confval:`autodoc_preserve_defaults` enabled
+* #9872: html: Class namespace collision between autodoc signatures and
+  docutils-0.17
+* #9868: imgmath: Crashed if the dvisvgm command failed to convert equation
+* #9864: mathjax: Failed to render equations via MathJax v2.  The loading method
+  of MathJax is back to "async" method again
+
+Release 4.3.0 (released Nov 11, 2021)
+=====================================
 
 Dependencies
 ------------
@@ -23,7 +107,7 @@ Incompatible changes
 * #9695: The rendering of Javascript domain declarations is implemented
   with more docutils nodes to allow better CSS styling.
   It may break existing styling.
-
+* #9450: mathjax: Load MathJax via "defer" strategy
 
 Deprecated
 ----------
@@ -43,6 +127,8 @@ Features added
 * #9691: C, added new info-field ``retval``
   for :rst:dir:`c:function` and :rst:dir:`c:macro`.
 * C++, added new info-field ``retval`` for :rst:dir:`cpp:function`.
+* #9618: i18n: Add :confval:`gettext_allow_fuzzy_translations` to allow "fuzzy"
+  messages for translation
 * #9672: More CSS classes on Python domain descriptions
 * #9695: More CSS classes on Javascript domain descriptions
 * #9683: Revert the removal of ``add_stylesheet()`` API.  It will be kept until
@@ -52,6 +138,8 @@ Features added
   inventory specification. Specific types of cross-references can be disabled,
   e.g., ``std:doc`` or all cross-references in a specific domain,
   e.g., ``std:*``.
+* #9623: Allow to suppress "toctree contains reference to excluded document"
+  warnings using :confval:`suppress_warnings`
 
 Bugs fixed
 ----------
@@ -94,30 +182,6 @@ Bugs fixed
 * #9656: Fix warnings without subtype being incorrectly suppressed
 * Intersphinx, for unresolved references with an explicit inventory,
   e.g., ``proj:myFunc``, leave the inventory prefix in the unresolved text.
-
-Testing
---------
-
-Release 4.2.1 (in development)
-==============================
-
-Dependencies
-------------
-
-Incompatible changes
---------------------
-
-Deprecated
-----------
-
-Features added
---------------
-
-Bugs fixed
-----------
-
-Testing
---------
 
 Release 4.2.0 (released Sep 12, 2021)
 =====================================
@@ -1625,6 +1689,14 @@ Bugs fixed
   :confval:`intersphinx_mapping` on :event:`config-inited` event
 * #7343: Sphinx builds has been slower since 2.4.0 on debug mode
 
+Release 2.4.5 (released Nov 18, 2021)
+=====================================
+
+Dependencies
+------------
+
+* #9807: Restrict docutils to 0.17.x or older
+
 Release 2.4.4 (released Mar 05, 2020)
 =====================================
 
@@ -2460,6 +2532,14 @@ Testing
 2.0.0b2
 
 * Add a helper function: ``sphinx.testing.restructuredtext.parse()``
+
+Release 1.8.6 (released Nov 18, 2021)
+=====================================
+
+Dependencies
+------------
+
+* #9807: Restrict docutils to 0.17.x or older
 
 Release 1.8.5 (released Mar 10, 2019)
 =====================================
