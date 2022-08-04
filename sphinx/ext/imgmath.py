@@ -1,12 +1,4 @@
-"""
-    sphinx.ext.imgmath
-    ~~~~~~~~~~~~~~~~~~
-
-    Render math in HTML via dvipng or dvisvgm.
-
-    :copyright: Copyright 2007-2021 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-"""
+"""Render math in HTML via dvipng or dvisvgm."""
 
 import posixpath
 import re
@@ -15,7 +7,7 @@ import subprocess
 import tempfile
 from os import path
 from subprocess import PIPE, CalledProcessError
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from docutils import nodes
 from docutils.nodes import Element
@@ -42,7 +34,9 @@ templates_path = path.join(package_dir, 'templates', 'imgmath')
 class MathExtError(SphinxError):
     category = 'Math extension error'
 
-    def __init__(self, msg: str, stderr: str = None, stdout: str = None) -> None:
+    def __init__(
+        self, msg: str, stderr: Optional[str] = None, stdout: Optional[str] = None
+    ) -> None:
         if stderr:
             msg += '\n[stderr]\n' + stderr
         if stdout:
@@ -61,11 +55,11 @@ depthsvg_re = re.compile(r'.*, depth=(.*)pt')
 depthsvgcomment_re = re.compile(r'<!-- DEPTH=(-?\d+) -->')
 
 
-def read_svg_depth(filename: str) -> int:
+def read_svg_depth(filename: str) -> Optional[int]:
     """Read the depth from comment at last line of SVG file
     """
-    with open(filename) as f:
-        for line in f:
+    with open(filename, encoding="utf-8") as f:
+        for line in f:  # noqa: B007
             pass
         # Only last line is checked
         matched = depthsvgcomment_re.match(line)
@@ -77,7 +71,7 @@ def read_svg_depth(filename: str) -> int:
 def write_svg_depth(filename: str, depth: int) -> None:
     """Write the depth to SVG file as a comment at end of file
     """
-    with open(filename, 'a') as f:
+    with open(filename, 'a', encoding="utf-8") as f:
         f.write('\n<!-- DEPTH=%s -->' % depth)
 
 

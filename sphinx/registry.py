@@ -1,12 +1,4 @@
-"""
-    sphinx.registry
-    ~~~~~~~~~~~~~~~
-
-    Sphinx component registry.
-
-    :copyright: Copyright 2007-2021 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-"""
+"""Sphinx component registry."""
 
 import traceback
 import warnings
@@ -16,21 +8,27 @@ from typing import (TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional
                     Union)
 
 from docutils import nodes
+from docutils.core import Publisher
 from docutils.io import Input
 from docutils.nodes import Element, Node, TextElement
 from docutils.parsers import Parser
 from docutils.parsers.rst import Directive
 from docutils.transforms import Transform
-from pkg_resources import iter_entry_points
+
+try:  # Python < 3.10 (backport)
+    from importlib_metadata import entry_points
+except ImportError:
+    from importlib.metadata import entry_points
 
 from sphinx.builders import Builder
 from sphinx.config import Config
-from sphinx.deprecation import RemovedInSphinx60Warning
+from sphinx.deprecation import RemovedInSphinx60Warning, RemovedInSphinx70Warning
 from sphinx.domains import Domain, Index, ObjType
 from sphinx.domains.std import GenericObject, Target
 from sphinx.environment import BuildEnvironment
 from sphinx.errors import ExtensionError, SphinxError, VersionRequirementError
 from sphinx.extension import Extension
+from sphinx.io import create_publisher
 from sphinx.locale import __
 from sphinx.parsers import Parser as SphinxParser
 from sphinx.roles import XRefRole
@@ -129,6 +127,9 @@ class SphinxComponentRegistry:
         #: additional transforms; list of transforms
         self.transforms: List[Type[Transform]] = []
 
+        # private cache of Docutils Publishers (file type -> publisher object)
+        self.publishers: Dict[str, Publisher] = {}
+
     def add_builder(self, builder: Type[Builder], override: bool = False) -> None:
         logger.debug('[app] adding builder: %r', builder)
         if not hasattr(builder, 'name'):
@@ -143,20 +144,32 @@ class SphinxComponentRegistry:
             return
 
         if name not in self.builders:
-            entry_points = iter_entry_points('sphinx.builders', name)
+            builder_entry_points = entry_points(group='sphinx.builders')
             try:
-                entry_point = next(entry_points)
-            except StopIteration as exc:
+                entry_point = builder_entry_points[name]
+            except KeyError as exc:
                 raise SphinxError(__('Builder name %s not registered or available'
                                      ' through entry point') % name) from exc
 
-            self.load_extension(app, entry_point.module_name)
+            self.load_extension(app, entry_point.module)
 
-    def create_builder(self, app: "Sphinx", name: str) -> Builder:
+    def create_builder(self, app: "Sphinx", name: str,
+                       env: BuildEnvironment = None) -> Builder:
         if name not in self.builders:
             raise SphinxError(__('Builder name %s not registered') % name)
 
-        return self.builders[name](app)
+        try:
+            return self.builders[name](app, env)
+        except TypeError:
+            warnings.warn(
+                f"The custom builder {name} defines a custom __init__ method without the "
+                f"'env'argument. Report this bug to the developers of your custom builder, "
+                f"this is likely not a issue with Sphinx. The 'env' argument will be required "
+                f"from Sphinx 7.", RemovedInSphinx70Warning, stacklevel=2)
+            builder = self.builders[name](app)
+            if env is not None:
+                builder.set_environment(env)
+            return builder
 
     def add_domain(self, domain: Type[Domain], override: bool = False) -> None:
         logger.debug('[app] adding domain: %r', domain)
@@ -383,7 +396,7 @@ class SphinxComponentRegistry:
 
     def add_latex_package(self, name: str, options: str, after_hyperref: bool = False) -> None:
         if self.has_latex_package(name):
-            logger.warn("latex package '%s' already included" % name)
+            logger.warning("latex package '%s' already included", name)
 
         logger.debug('[app] adding latex package: %r', name)
         if after_hyperref:
@@ -464,6 +477,15 @@ class SphinxComponentRegistry:
                       if ext.metadata.get('env_version')}
         envversion['sphinx'] = ENV_VERSION
         return envversion
+
+    def get_publisher(self, app: "Sphinx", filetype: str) -> Publisher:
+        try:
+            return self.publishers[filetype]
+        except KeyError:
+            pass
+        publisher = create_publisher(app, filetype)
+        self.publishers[filetype] = publisher
+        return publisher
 
 
 def merge_source_suffix(app: "Sphinx", config: Config) -> None:

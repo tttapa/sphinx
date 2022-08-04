@@ -1,20 +1,15 @@
-"""
-    sphinx.ext.autosummary.generate
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Generates reST source files for autosummary.
 
-    Usable as a library or script to generate automatic RST source files for
-    items referred to in autosummary:: directives.
+Usable as a library or script to generate automatic RST source files for
+items referred to in autosummary:: directives.
 
-    Each generated RST file contains a single auto*:: directive which
-    extracts the docstring of the referred item.
+Each generated RST file contains a single auto*:: directive which
+extracts the docstring of the referred item.
 
-    Example Makefile rule::
+Example Makefile rule::
 
-       generate:
-               sphinx-autogen -o source/generated source/*.rst
-
-    :copyright: Copyright 2007-2021 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+   generate:
+           sphinx-autogen -o source/generated source/*.rst
 """
 
 import argparse
@@ -25,10 +20,9 @@ import pkgutil
 import pydoc
 import re
 import sys
-import warnings
 from gettext import NullTranslations
 from os import path
-from typing import Any, Dict, List, NamedTuple, Sequence, Set, Tuple, Type, Union
+from typing import Any, Dict, List, NamedTuple, Sequence, Set, Tuple, Type
 
 from jinja2 import TemplateNotFound
 from jinja2.sandbox import SandboxedEnvironment
@@ -38,10 +32,10 @@ from sphinx import __display_version__, package_dir
 from sphinx.application import Sphinx
 from sphinx.builders import Builder
 from sphinx.config import Config
-from sphinx.deprecation import RemovedInSphinx50Warning
 from sphinx.ext.autodoc import Documenter
 from sphinx.ext.autodoc.importer import import_module
-from sphinx.ext.autosummary import get_documenter, import_by_name, import_ivar_by_name
+from sphinx.ext.autosummary import (ImportExceptionGroup, get_documenter, import_by_name,
+                                    import_ivar_by_name)
 from sphinx.locale import __
 from sphinx.pycode import ModuleAnalyzer, PycodeError
 from sphinx.registry import SphinxComponentRegistry
@@ -97,18 +91,6 @@ def setup_documenters(app: Any) -> None:
         app.registry.add_documenter(documenter.objtype, documenter)
 
 
-def _simple_info(msg: str) -> None:
-    warnings.warn('_simple_info() is deprecated.',
-                  RemovedInSphinx50Warning, stacklevel=2)
-    print(msg)
-
-
-def _simple_warn(msg: str) -> None:
-    warnings.warn('_simple_warn() is deprecated.',
-                  RemovedInSphinx50Warning, stacklevel=2)
-    print('WARNING: ' + msg, file=sys.stderr)
-
-
 def _underline(title: str, line: str = '=') -> str:
     if '\n' in title:
         raise ValueError('Can only underline single lines')
@@ -118,14 +100,9 @@ def _underline(title: str, line: str = '=') -> str:
 class AutosummaryRenderer:
     """A helper class for rendering."""
 
-    def __init__(self, app: Union[Builder, Sphinx], template_dir: str = None) -> None:
+    def __init__(self, app: Sphinx) -> None:
         if isinstance(app, Builder):
-            warnings.warn('The first argument for AutosummaryRenderer has been '
-                          'changed to Sphinx object',
-                          RemovedInSphinx50Warning, stacklevel=2)
-        if template_dir:
-            warnings.warn('template_dir argument for AutosummaryRenderer is deprecated.',
-                          RemovedInSphinx50Warning, stacklevel=2)
+            raise ValueError('Expected a Sphinx application object!')
 
         system_templates_path = [os.path.join(package_dir, 'ext', 'autosummary', 'templates')]
         loader = SphinxTemplateLoader(app.srcdir, app.config.templates_path,
@@ -136,24 +113,9 @@ class AutosummaryRenderer:
         self.env.filters['e'] = rst.escape
         self.env.filters['underline'] = _underline
 
-        if isinstance(app, (Sphinx, DummyApplication)):
-            if app.translator:
-                self.env.add_extension("jinja2.ext.i18n")
-                self.env.install_gettext_translations(app.translator)
-        elif isinstance(app, Builder):
-            if app.app.translator:
-                self.env.add_extension("jinja2.ext.i18n")
-                self.env.install_gettext_translations(app.app.translator)
-
-    def exists(self, template_name: str) -> bool:
-        """Check if template file exists."""
-        warnings.warn('AutosummaryRenderer.exists() is deprecated.',
-                      RemovedInSphinx50Warning, stacklevel=2)
-        try:
-            self.env.get_template(template_name)
-            return True
-        except TemplateNotFound:
-            return False
+        if app.translator:
+            self.env.add_extension("jinja2.ext.i18n")
+            self.env.install_gettext_translations(app.translator)
 
     def render(self, template_name: str, context: Dict) -> str:
         """Render a template file."""
@@ -193,6 +155,12 @@ class ModuleScanner:
 
     def scan(self, imported_members: bool) -> List[str]:
         members = []
+        try:
+            analyzer = ModuleAnalyzer.for_module(self.object.__name__)
+            attr_docs = analyzer.find_attr_docs()
+        except PycodeError:
+            attr_docs = {}
+
         for name in members_of(self.object, self.app.config):
             try:
                 value = safe_getattr(self.object, name)
@@ -204,7 +172,9 @@ class ModuleScanner:
                 continue
 
             try:
-                if inspect.ismodule(value):
+                if ('', name) in attr_docs:
+                    imported = False
+                elif inspect.ismodule(value):
                     imported = True
                 elif safe_getattr(value, '__module__') != self.object.__name__:
                     imported = True
@@ -317,7 +287,7 @@ def generate_autosummary_content(name: str, obj: Any, parent: Any,
 
     def get_modules(obj: Any) -> Tuple[List[str], List[str]]:
         items: List[str] = []
-        for _, modname, ispkg in pkgutil.iter_modules(obj.__path__):
+        for _, modname, _ispkg in pkgutil.iter_modules(obj.__path__):
             fullname = name + '.' + modname
             try:
                 module = import_module(fullname)
@@ -383,18 +353,9 @@ def generate_autosummary_content(name: str, obj: Any, parent: Any,
 
 def generate_autosummary_docs(sources: List[str], output_dir: str = None,
                               suffix: str = '.rst', base_path: str = None,
-                              builder: Builder = None, template_dir: str = None,
                               imported_members: bool = False, app: Any = None,
                               overwrite: bool = True, encoding: str = 'utf-8') -> None:
-    if builder:
-        warnings.warn('builder argument for generate_autosummary_docs() is deprecated.',
-                      RemovedInSphinx50Warning, stacklevel=2)
-
-    if template_dir:
-        warnings.warn('template_dir argument for generate_autosummary_docs() is deprecated.',
-                      RemovedInSphinx50Warning, stacklevel=2)
-
-    showed_sources = list(sorted(sources))
+    showed_sources = sorted(sources)
     if len(showed_sources) > 20:
         showed_sources = showed_sources[:10] + ['...'] + showed_sources[-10:]
     logger.info(__('[autosummary] generating autosummary for: %s') %
@@ -432,13 +393,20 @@ def generate_autosummary_docs(sources: List[str], output_dir: str = None,
         try:
             name, obj, parent, modname = import_by_name(entry.name)
             qualname = name.replace(modname + ".", "")
-        except ImportError as e:
+        except ImportExceptionGroup as exc:
             try:
-                # try to importl as an instance attribute
+                # try to import as an instance attribute
                 name, obj, parent, modname = import_ivar_by_name(entry.name)
                 qualname = name.replace(modname + ".", "")
-            except ImportError:
-                logger.warning(__('[autosummary] failed to import %r: %s') % (entry.name, e))
+            except ImportError as exc2:
+                if exc2.__cause__:
+                    exceptions: List[BaseException] = exc.exceptions + [exc2.__cause__]
+                else:
+                    exceptions = exc.exceptions + [exc2]
+
+                errors = list({"* %s: %s" % (type(e).__name__, e) for e in exceptions})
+                logger.warning(__('[autosummary] failed to import %s.\nPossible hints:\n%s'),
+                               entry.name, '\n'.join(errors))
                 continue
 
         context: Dict[str, Any] = {}
@@ -469,7 +437,6 @@ def generate_autosummary_docs(sources: List[str], output_dir: str = None,
     if new_files:
         generate_autosummary_docs(new_files, output_dir=output_dir,
                                   suffix=suffix, base_path=base_path,
-                                  builder=builder, template_dir=template_dir,
                                   imported_members=imported_members, app=app,
                                   overwrite=overwrite)
 
@@ -489,24 +456,20 @@ def find_autosummary_in_files(filenames: List[str]) -> List[AutosummaryEntry]:
     return documented
 
 
-def find_autosummary_in_docstring(name: str, module: str = None, filename: str = None
-                                  ) -> List[AutosummaryEntry]:
+def find_autosummary_in_docstring(name: str, filename: str = None) -> List[AutosummaryEntry]:
     """Find out what items are documented in the given object's docstring.
 
     See `find_autosummary_in_lines`.
     """
-    if module:
-        warnings.warn('module argument for find_autosummary_in_docstring() is deprecated.',
-                      RemovedInSphinx50Warning, stacklevel=2)
-
     try:
         real_name, obj, parent, modname = import_by_name(name)
         lines = pydoc.getdoc(obj).splitlines()
         return find_autosummary_in_lines(lines, module=name, filename=filename)
     except AttributeError:
         pass
-    except ImportError as e:
-        print("Failed to import '%s': %s" % (name, e))
+    except ImportExceptionGroup as exc:
+        errors = list({"* %s: %s" % (type(e).__name__, e) for e in exc.exceptions})
+        print('Failed to import %s.\nPossible hints:\n%s' % (name, '\n'.join(errors)))
     except SystemExit:
         print("Failed to import '%s'; the module executes module level "
               "statement and it might call sys.exit()." % name)

@@ -1,17 +1,13 @@
-"""
-    sphinx.ext.napoleon.iterators
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-    A collection of helpful iterators.
-
-
-    :copyright: Copyright 2007-2021 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-"""
+"""A collection of helpful iterators."""
 
 import collections
+import warnings
 from typing import Any, Iterable, Optional
+
+from sphinx.deprecation import RemovedInSphinx70Warning
+
+warnings.warn('sphinx.ext.napoleon.iterators is deprecated.',
+              RemovedInSphinx70Warning)
 
 
 class peek_iter:

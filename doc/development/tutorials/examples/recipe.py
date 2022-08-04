@@ -87,7 +87,7 @@ class RecipeIndex(Index):
         # first letter of the recipe as a key to group thing
         #
         # name, subtype, docname, anchor, extra, qualifier, description
-        for name, dispname, typ, docname, anchor, _ in recipes:
+        for _name, dispname, typ, docname, anchor, _priority in recipes:
             content[dispname[0].lower()].append(
                 (dispname, 0, docname, anchor, docname, '', typ))
 
@@ -121,7 +121,7 @@ class RecipeDomain(Domain):
 
     def get_objects(self):
         for obj in self.data['recipes']:
-            yield(obj)
+            yield obj
 
     def resolve_xref(self, env, fromdocname, builder, typ, target, node,
                      contnode):

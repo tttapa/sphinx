@@ -1,12 +1,4 @@
-"""
-    sphinx.cmd.quickstart
-    ~~~~~~~~~~~~~~~~~~~~~
-
-    Quickly setup documentation source to work with Sphinx.
-
-    :copyright: Copyright 2007-2021 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-"""
+"""Quickly setup documentation source to work with Sphinx."""
 
 import argparse
 import locale
@@ -15,11 +7,14 @@ import sys
 import time
 from collections import OrderedDict
 from os import path
-from typing import Any, Callable, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Union
 
 # try to import readline, unix specific enhancement
 try:
     import readline
+    if TYPE_CHECKING and sys.platform == "win32":  # always false, for type checking
+        raise ImportError
+
     if readline.__doc__ and 'libedit' in readline.__doc__:
         readline.parse_and_bind("bind ^I rl_complete")
         USE_LIBEDIT = True
@@ -188,7 +183,7 @@ class QuickstartRenderer(SphinxRenderer):
             return super().render(template_name, context)
 
 
-def ask_user(d: Dict) -> None:
+def ask_user(d: Dict[str, Any]) -> None:
     """Ask the user for quickstart values missing from *d*.
 
     Values are:
@@ -375,7 +370,7 @@ def generate(d: Dict, overwrite: bool = True, silent: bool = False, templatedir:
     conf_path = os.path.join(templatedir, 'conf.py_t') if templatedir else None
     if not conf_path or not path.isfile(conf_path):
         conf_path = os.path.join(package_dir, 'templates', 'quickstart', 'conf.py_t')
-    with open(conf_path) as f:
+    with open(conf_path, encoding="utf-8") as f:
         conf_text = f.read()
 
     write_file(path.join(srcdir, 'conf.py'), template.render_string(conf_text, d))

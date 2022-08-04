@@ -211,6 +211,12 @@ The following directives are provided for module and class contents:
 
       .. versionadded:: 4.0
 
+   .. rst::directive:option:: module
+      :type: text
+
+      Describe the location where the object is defined.  The default value is
+      the module specified by :rst:dir:`py:currentmodule`.
+
 .. rst:directive:: .. py:data:: name
 
    Describes global data in a module, including both variables and values used
@@ -237,6 +243,12 @@ The following directives are provided for module and class contents:
 
       .. versionadded:: 4.0
 
+   .. rst::directive:option:: module
+      :type: text
+
+      Describe the location where the object is defined.  The default value is
+      the module specified by :rst:dir:`py:currentmodule`.
+
 .. rst:directive:: .. py:exception:: name
 
    Describes an exception class.  The signature can, but need not include
@@ -250,6 +262,12 @@ The following directives are provided for module and class contents:
       Indicate the class is a final class.
 
       .. versionadded:: 3.1
+
+   .. rst::directive:option:: module
+      :type: text
+
+      Describe the location where the object is defined.  The default value is
+      the module specified by :rst:dir:`py:currentmodule`.
 
 .. rst:directive:: .. py:class:: name
                    .. py:class:: name(parameters)
@@ -291,6 +309,12 @@ The following directives are provided for module and class contents:
 
       .. versionadded:: 3.1
 
+   .. rst::directive:option:: module
+      :type: text
+
+      Describe the location where the object is defined.  The default value is
+      the module specified by :rst:dir:`py:currentmodule`.
+
 .. rst:directive:: .. py:attribute:: name
 
    Describes an object data attribute.  The description should include
@@ -317,6 +341,12 @@ The following directives are provided for module and class contents:
 
       .. versionadded:: 4.0
 
+   .. rst::directive:option:: module
+      :type: text
+
+      Describe the location where the object is defined.  The default value is
+      the module specified by :rst:dir:`py:currentmodule`.
+
 .. rst:directive:: .. py:property:: name
 
    Describes an object property.
@@ -339,6 +369,12 @@ The following directives are provided for module and class contents:
 
    .. rst:directive:option:: type: type of the property
       :type: text
+
+   .. rst::directive:option:: module
+      :type: text
+
+      Describe the location where the object is defined.  The default value is
+      the module specified by :rst:dir:`py:currentmodule`.
 
 .. rst:directive:: .. py:method:: name(parameters)
 
@@ -384,6 +420,12 @@ The following directives are provided for module and class contents:
       Indicate the class is a final method.
 
       .. versionadded:: 3.1
+
+   .. rst::directive:option:: module
+      :type: text
+
+      Describe the location where the object is defined.  The default value is
+      the module specified by :rst:dir:`py:currentmodule`.
 
    .. rst:directive:option:: property
       :type: no value
@@ -1707,6 +1749,9 @@ There is a set of directives allowing documenting command-line programs:
    The directive will create cross-reference targets for the given options,
    referenceable by :rst:role:`option` (in the example case, you'd use something
    like ``:option:`dest_dir```, ``:option:`-m```, or ``:option:`--module```).
+
+   Use :confval:`option_emphasise_placeholders` for parsing of
+   "variable part" of a literal text (similarly to the :rst:role:`samp` role).
 
    ``cmdoption`` directive is a deprecated alias for the ``option`` directive.
 

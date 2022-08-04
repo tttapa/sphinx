@@ -1,12 +1,4 @@
-"""
-    sphinx.testing.util
-    ~~~~~~~~~~~~~~~~~~~
-
-    Sphinx test suite utilities
-
-    :copyright: Copyright 2007-2021 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-"""
+"""Sphinx test suite utilities"""
 import functools
 import os
 import re
@@ -32,17 +24,17 @@ __all__ = [
 
 def assert_re_search(regex: Pattern, text: str, flags: int = 0) -> None:
     if not re.search(regex, text, flags):
-        assert False, '%r did not match %r' % (regex, text)
+        raise AssertionError('%r did not match %r' % (regex, text))
 
 
 def assert_not_re_search(regex: Pattern, text: str, flags: int = 0) -> None:
     if re.search(regex, text, flags):
-        assert False, '%r did match %r' % (regex, text)
+        raise AssertionError('%r did match %r' % (regex, text))
 
 
 def assert_startswith(thing: str, prefix: str) -> None:
     if not thing.startswith(prefix):
-        assert False, '%r does not start with %r' % (thing, prefix)
+        raise AssertionError('%r does not start with %r' % (thing, prefix))
 
 
 def assert_node(node: Node, cls: Any = None, xpath: str = "", **kwargs: Any) -> None:
@@ -178,7 +170,7 @@ _unicode_literals_re = re.compile(r'u(".*?")|u(\'.*?\')')
 
 
 def find_files(root: str, suffix: bool = None) -> Generator[str, None, None]:
-    for dirpath, dirs, files in os.walk(root, followlinks=True):
+    for dirpath, _dirs, files in os.walk(root, followlinks=True):
         dirpath = path(dirpath)
         for f in [f for f in files if not suffix or f.endswith(suffix)]:  # type: ignore
             fpath = dirpath / f
